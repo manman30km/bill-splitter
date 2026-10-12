@@ -1,0 +1,16 @@
+# 密碼、憑證與私鑰不得上傳。
+.env
+.env.*
+*.env
+secrets.json
+secrets.*.json
+**/secrets/
+**/credentials.json
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
