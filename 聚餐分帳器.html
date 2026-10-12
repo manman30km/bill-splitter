@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>聚餐分帳器</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6f2;color:#20382c;font-family:system-ui,"Microsoft JhengHei",sans-serif;padding:32px 18px}main{max-width:520px;margin:auto;background:white;padding:30px;border-radius:24px;box-shadow:0 12px 40px #20382c12}h1{font-size:30px;margin:6px 0 10px}.intro{color:#627268;line-height:1.7;margin-bottom:26px}.tag{color:#42735a;font-size:13px;font-weight:700;letter-spacing:2px}label.field{display:block;font-weight:650;margin-top:20px}input[type=number]{display:block;width:100%;font:inherit;font-size:22px;padding:13px;margin-top:9px;border:1px solid #c8d4cc;border-radius:12px}input:focus{outline:3px solid #bfdcc9;outline-offset:2px}.check{display:flex;align-items:center;gap:10px;margin:22px 0;cursor:pointer}.check input{width:21px;height:21px;accent-color:#2e6749}button{width:100%;border:0;border-radius:12px;padding:15px;background:#2e6749;color:white;font:inherit;font-weight:700;cursor:pointer}button:hover{background:#24543b}.result{margin-top:24px;background:#edf5ee;padding:22px;border-radius:16px}.row{display:flex;justify-content:space-between;align-items:baseline;gap:14px;margin:14px 0}.amount{font-size:27px;font-weight:750;white-space:nowrap}.note{font-size:14px;color:#53695b;line-height:1.7}.total{border-top:1px solid #c8d9cb;padding-top:15px;margin-top:18px;font-weight:650}.error{color:#ac302a;margin-top:18px}.privacy{text-align:center;font-size:12px;color:#738078;margin-top:22px}@media(max-width:380px){main{padding:22px}.amount{font-size:23px}}
+</style>
+</head>
+<body>
+<main>
+<div class="tag">一起吃飯，輕鬆分帳</div>
+<h1>聚餐分帳器</h1>
+<p class="intro">算好每個人要給多少，除不盡的零頭由付錢的人負擔。</p>
+<form id="calculator">
+<label class="field" for="money">總金額（元，未加服務費）</label>
+<input id="money" type="number" min="0" step="1" value="1000" required inputmode="numeric">
+<label class="field" for="people">聚餐人數（包含付錢的人）</label>
+<input id="people" type="number" min="1" step="1" value="3" required inputmode="numeric">
+<label class="check"><input id="service" type="checkbox">加 10% 服務費</label>
+<p class="note">金額請輸入整數元；服務費四捨五入到整數元。</p>
+<button type="submit">計算分帳</button>
+</form>
+<p id="error" class="error" role="alert" hidden></p>
+<section id="result" class="result" aria-live="polite" aria-atomic="true" hidden></section>
+<p class="privacy">離線使用・不需登入・不儲存任何資料</p>
+</main>
+<script>
+'use strict';
+const form=document.getElementById('calculator');
+const result=document.getElementById('result');
+const error=document.getElementById('error');
+function splitBill(base,count,withService){
+ if(!Number.isSafeInteger(base)||base<0||!Number.isSafeInteger(count)||count<1)throw new Error('請輸入有效的整數金額與人數。');
+ const fee=withService?Math.floor(base/10)+(base%10>=5?1:0):0;
+ const total=base+fee;
+ if(!Number.isSafeInteger(total))throw new Error('金額太大，請輸入較小的金額。');
+ const others=Math.floor(total/count);
+ const remainder=total%count;
+ return {fee,total,others,remainder,payer:others+remainder,count};
+}
+function calculate(){
+ try{
+  const bill=splitBill(Number(document.getElementById('money').value),Number(document.getElementById('people').value),document.getElementById('service').checked);
+  const fmt=n=>n.toLocaleString('zh-TW');
+  result.innerHTML='<div class="row"><span>付錢的人</span><span class="amount">'+fmt(bill.payer)+' 元</span></div>'+
+   (bill.count>1?'<div class="row"><span>其他 '+fmt(bill.count-1)+' 人各</span><span class="amount">'+fmt(bill.others)+' 元</span></div>':'<p class="note">只有 1 人，由付錢的人負擔全部金額。</p>')+
+   '<p class="note">'+(bill.remainder?'付錢的人已包含零頭 '+fmt(bill.remainder)+' 元。':'沒有零頭。')+'</p>'+
+   '<div class="total">應付總額：'+fmt(bill.total)+' 元</div>'+
+   '<p class="note">服務費：'+fmt(bill.fee)+' 元<br>核對：'+fmt(bill.payer)+(bill.count>1?' ＋ '+fmt(bill.others)+' × '+fmt(bill.count-1):'')+' ＝ '+fmt(bill.total)+' 元</p>';
+  result.hidden=false;error.hidden=true;
+ }catch(e){result.hidden=true;error.textContent=e.message;error.hidden=false;}
+}
+form.addEventListener('submit',event=>{event.preventDefault();calculate();});
+form.addEventListener('input',()=>{result.hidden=true;error.hidden=true;});
+calculate();
+</script>
+</body>
+</html>
